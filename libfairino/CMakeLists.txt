@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10.0)
 
 project(fairino_cppSDK VERSION 0.1.0 LANGUAGES C CXX)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -fPIC)
@@ -14,6 +15,13 @@ if(WIN32)
     set(CMAKE_CXX_EXTENSIONS OFF)
     add_definitions(-DWINDOWS_OPTION)
     string(REPLACE "/EHsc" "/EHa" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
+    if(MSVC)
+        # 禁用 C4819 警告
+        add_compile_options(/wd4819)# C4819: 文件编码问题
+        add_compile_options(/wd4251)# C4251: 导出类包含未导出的 STL 成员
+
+    endif()
 elseif(UNIX)
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -75,12 +83,12 @@ if(WIN32)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/build/bin/Release)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG  ${CMAKE_CURRENT_SOURCE_DIR}/build/bin/Debug)
 
-    add_library(fairino SHARED ${ALL_INCLUDE} ${ALL_SRC} "src/include/CNDE/CNDEFrameHandle.h" "src/src/CNDE/CNDEFrameHandle.cpp")
+    add_library(fairino SHARED ${ALL_INCLUDE} ${ALL_SRC})
     #add_library(fairinod STATIC ${ALL_INCLUDE} ${ALL_SRC})
     target_link_libraries(fairino ws2_32)
     target_link_libraries(fairino Shlwapi)
         
-    add_executable(test_fairino ${ALL_INCLUDE} ${ALL_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp "src/include/CNDE/CNDEFrameHandle.h" "src/src/CNDE/CNDEFrameHandle.cpp")
+    add_executable(test_fairino ${ALL_INCLUDE} ${ALL_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
     target_link_libraries(test_fairino ws2_32)
     target_link_libraries(test_fairino Shlwapi)
 
@@ -98,7 +106,7 @@ elseif(UNIX)
     # 关闭优化选项
     target_compile_options(fairino PRIVATE -O0)
     # 为动态库生成版本信息
-    set_target_properties(fairino PROPERTIES VERSION 2.3.5 SOVERSION 2)
+    set_target_properties(fairino PROPERTIES VERSION 2.3.6 SOVERSION 2)
 
     add_executable(test_fairino ${ALL_INCLUDE} ${ALL_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
     SET(CMAKE_BUILD_TYPE "Release")

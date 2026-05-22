@@ -11,7 +11,9 @@
 #define ELOG_LVL_DEBUG 4
 
 #ifdef WIN32
-    #define _WINDOWS
+    #ifndef _WINDOWS
+        #define _WINDOWS
+    #endif
 #endif
 
 /* 日志入口；

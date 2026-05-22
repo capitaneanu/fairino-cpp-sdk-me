@@ -6547,73 +6547,7 @@ int TestServoJUDP(void)
      return 0;
  }
 
- int TestUDPAxis(void)
- {
-     ROBOT_STATE_PKG pkg = {};
-     FRRobot robot;
 
-     robot.LoggerInit();
-     robot.SetLoggerLevel(1);
-     int rtn = robot.RPC("192.168.58.2");
-     if (rtn != 0)
-     {
-         return -1;
-     }
-     robot.SetReConnectParam(true, 30000, 500);
-
-     rtn = robot.ExtDevSetUDPComParam("192.168.58.88", 2021, 2, 100, 3, 200, 1, 100, 5, 1);
-     cout << "ExtDevSetUDPComParam rtn is " << rtn << endl;
-     string ip = ""; int port = 0; int period = 0; int lossPkgTime = 0; int lossPkgNum = 0; int disconnectTime = 0; int reconnectEnable = 0; int reconnectPeriod = 0; int reconnectNum = 0; int selfConnect = 0;
-     rtn = robot.ExtDevGetUDPComParam(ip, port, period, lossPkgTime, lossPkgNum, disconnectTime, reconnectEnable, reconnectPeriod, reconnectNum, selfConnect);
-     string patam = "\nip " + ip + "\nport " + to_string(port) + "\nperiod  " + to_string(period) + "\nlossPkgTime " + to_string(lossPkgTime) + "\nlossPkgNum  " + to_string(lossPkgNum) + "\ndisConntime  " + 
-         to_string(disconnectTime) + "\nreconnecable  " + to_string(reconnectEnable) + "\nreconnperiod  " + to_string(reconnectPeriod) + "\nreconnnun  " + to_string(reconnectNum) + "\nselfConnect  " + to_string(selfConnect);
-     cout << "ExtDevGetUDPComParam rtn is " << rtn << patam << endl;
-
-     robot.ExtDevLoadUDPDriver();
-
-     rtn = robot.SetExAxisCmdDoneTime(5000.0);
-     cout << "SetExAxisCmdDoneTime rtn is " << rtn << endl;
-     rtn = robot.ExtAxisServoOn(1, 1);
-     cout << "ExtAxisServoOn axis id 1 rtn is " << rtn << endl;
-     rtn = robot.ExtAxisServoOn(2, 1);
-     cout << "ExtAxisServoOn axis id 2 rtn is " << rtn << endl;
-     robot.Sleep(2000);
-
-     robot.ExtAxisSetHoming(1, 0, 10, 2);
-     robot.Sleep(2000);
-     rtn = robot.ExtAxisSetHoming(2, 0, 10, 2);
-     cout << "ExtAxisSetHoming rtnn is  " << rtn << endl;
-
-     robot.Sleep(4000);
-
-     rtn = robot.SetRobotPosToAxis(1);
-     cout << "SetRobotPosToAxis rtn is " << rtn << endl;
-     rtn = robot.SetAxisDHParaConfig(10, 20, 0, 0, 0, 0, 0, 0, 0);
-     cout << "SetAxisDHParaConfig rtn is " << rtn << endl;
-     rtn = robot.ExtAxisParamConfig(1, 1, 1, 1000, -1000, 1000, 1000, 1.905, 262144, 200, 1, 0, 0);
-     cout << "ExtAxisParamConfig axis 1 rtn is " << rtn << endl;
-     rtn = robot.ExtAxisParamConfig(2, 1, 1, 1000, -1000, 1000, 1000, 4.444, 262144, 200, 1, 0, 0);
-     cout << "ExtAxisParamConfig axis 1 rtn is " << rtn << endl;
-
-     robot.Sleep(1000 * 3);
-     robot.ExtAxisStartJog(1, 0, 10, 10, 30);
-     robot.Sleep(1000 * 1);
-     robot.ExtAxisStopJog(1);
-     robot.Sleep(1000 * 3);
-     robot.ExtAxisServoOn(1, 0);
-
-     robot.Sleep(1000 * 3);
-     robot.ExtAxisStartJog(2, 0, 10, 10, 30);
-     robot.Sleep(1000 * 1);
-     robot.ExtAxisStopJog(2);
-     robot.Sleep(1000 * 3);
-     robot.ExtAxisServoOn(2, 0);
-
-     robot.ExtDevUnloadUDPDriver();
-     
-     robot.CloseRPC();
-     return 0;
- }
 
  int TestUDPAxisCalib(void)
  {
@@ -10691,52 +10625,347 @@ int TsetFieldBusAO() {
     return 0;
 }
 
-int main() {
 
+int ServoMITtest()
+{
     ROBOT_STATE_PKG pkg = {};
     FRRobot robot;
-    int rtn = 0;
     robot.LoggerInit();
     robot.SetLoggerLevel(1);
     robot.SetReConnectParam(true, 30000, 500);
-
+    int rtn = robot.SetCmdRpyCallback(UDPFrameCallBack);
+    printf("SetCmdRpyCallback rtn is %d\n", rtn);
     rtn = robot.RPC("192.168.58.2");
     if (rtn != 0)
     {
-        printf("robot RPC failed %d\n", rtn);
-        return 0;
+        return -1;
     }
 
     while (true)
     {
-        float speed = 0.0f;
-        int mode = 0;
+        robot.ResetAllError();
+        robot.Sleep(500);
 
-        std::cout << "请输入速度 (float): ";
-        while (!(std::cin >> speed))
+        //JointPos j = new JointPos(7.053, -89.699, 156.141, -72.751, 7.829, 1.889);
+        //ExaxisPos epos = new ExaxisPos(0, 0, 0, 0);
+        //DescPose offset_pos = new DescPose(-151.288, -321.186, 221.989, 89.140, 4.361, -0.795);
+        //robot.MoveJ(j, 0, 0, 100, 100, 100, epos, -1, 0, offset_pos);
+
+
+        double posGain[6] = { 0.0 };
+        double desPos[6] = { 0.0 };
+        double velGain[6] = { 0.0 };
+        double desVel[6] = { 0.0 };
+        double torques[6] = { 0.0 };
+        float curTorque[6] = { 0.0 };
+        robot.GetJointTorques(1, curTorque);
+        for (int i = 0; i < 6; i++)
         {
-            std::cin.clear(); // 清除错误标志
-            std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n'); // 忽略错误输入
-            std::cout << "输入无效，请输入一个浮点数: ";
+            torques[i] = curTorque[i];
         }
 
-        std::cout << "请输入模式 (int, 默认为0): ";
-        if (!(std::cin >> mode))
+        robot.ServoMITStart(0);
+        printf("ServoMITStart\n");
+        ROBOT_STATE_PKG pkg = {};
+        robot.DragTeachSwitch(1);
+        printf("DragTeachSwitch");
+        double intev = 0.008;
+        double jPowerLimit[6] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
+        double jVelLimit[6] = { 50, 50, 50, 50, 50, 50 };
+        int error = 0;
+        while (true)
         {
-            // 如果输入不是整数，使用默认值0
-            std::cin.clear();
-            std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
-            std::cout << "输入无效，将使用默认模式0" << std::endl;
-            mode = 0;
+
+            torques[5] = 0.02;
+            printf("ServoMIT call \n");
+            error = robot.ServoMIT(posGain, desPos, velGain, desVel, torques, intev, 0);
+
+            printf("ServoMIT111111 rtn is %d\n", error);
+            robot.Sleep(1);
+
+            robot.GetRobotRealTimeState(&pkg);
+            //Console.WriteLine($"maincode {pkg.main_code}, subcode {pkg.sub_code}");
+            printf("pkg.jt_cur_pos[5]: %f\n", pkg.jt_cur_pos[5]);
+            if (pkg.jt_cur_pos[5] > 30)
+            {
+                break;
+            }
         }
 
-        rtn = robot.SetTrajectoryJSpeed(speed, mode);
-        printf("SetTrajectoryJSpeed rtn is  %d\n", rtn);
+        while (true)
+        {
 
+            torques[5] = -0.02;
+            error = robot.ServoMIT(posGain, desPos, velGain, desVel, torques, intev, 0);
+
+            printf("ServoJT222222 rtn is %d\n", error);
+            robot.Sleep(1);
+
+            robot.GetRobotRealTimeState(&pkg);
+            //Console.WriteLine($"maincode {pkg.main_code}, subcode {pkg.sub_code}");
+            printf("pkg.jt_cur_pos[5]:%f\n", pkg.jt_cur_pos[5]);
+            if (pkg.jt_cur_pos[5] < 0)
+            {
+                break;
+            }
+        }
+
+        robot.DragTeachSwitch(0);
+        error = robot.ServoMITEnd(0);
+    }
+
+    robot.CloseRPC();
+
+    robot.Sleep(1000000);
+    return 0;
+}
+
+int ServoJVtest()
+{
+    ROBOT_STATE_PKG pkg = {};
+    FRRobot robot;
+    robot.LoggerInit();
+    robot.SetLoggerLevel(1);
+    robot.SetReConnectParam(true, 300000, 500);
+    int rtn = robot.RPC("192.168.58.2");
+    if (rtn != 0)
+    {
+        return -1;
+    }
+    double joint_vel[6] = { 10.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+    double exis_vel[4] { 0.0, 0.0, 0.0, 0.0 };
+    float acc = 0.0f;
+    float vel = 0.0f;
+    float cmdT = 0.008f;
+    float filterT = 0.0f;
+    float gain = 0.0f;
+    int cnt = 0;
+    while (cnt < 200)
+    {
+        int error = robot.ServoJV(joint_vel, exis_vel, acc, vel, cmdT, filterT, gain);
+        printf("ServoJV rtn is %d\n", error);
+        cnt++;
+    }
+
+    robot.CloseRPC();
+
+    robot.Sleep(1000000);
+    return 0;
+}
+
+int TestLaserWeld()
+{
+    ROBOT_STATE_PKG pkg = {};
+    FRRobot robot;
+    robot.LoggerInit();
+    robot.SetLoggerLevel(1);
+    robot.SetReConnectParam(true, 300000, 500);
+    int rtn = robot.RPC("192.168.58.2");
+    if (rtn != 0)
+    {
+        return -1;
     }
 
 
+    rtn = robot.ExtDevLoadUDPDriver();
+    if (rtn != 0) {
+        std::cout << "Failed to load UDP driver, error code: " << rtn << std::endl;
+    }
     robot.Sleep(1000);
+
+    // 设置激光焊接参数
+    // 参数顺序: io_type, num, scanSpeed, scanWidth, peakPower, dutyCycle, freq
+    // num=3, scanSpeed=2000, scanWidth=3, peakPower=1500, dutyCycle=100, freq=1000, io_type=1
+    rtn = robot.SetLaserWeldingParam(1, 3, 2000, 3, 1500, 100, 1000);
+    if (rtn != 0) {
+        std::cout << "SetLaserWeldingParam failed, error code: " << rtn << std::endl;
+    }
+    else {
+        std::cout << "SetLaserWeldingParam success" << std::endl;
+    }
+
+    // 设置启动的DO端口号
+    rtn = robot.SetLaserWeldingStartExtDoNum(1);
+    if (rtn != 0) {
+        std::cout << "SetLaserWeldingStartExtDoNum failed, error code: " << rtn << std::endl;
+    }
+
+    // 设置为模式0（通常为示教模式）
+    rtn = robot.Mode(0);
+    if (rtn != 0) {
+        std::cout << "Set mode 0 failed, error code: " << rtn << std::endl;
+    }
+    robot.Sleep(1000);
+
+    DescPose desc_pos1(-303.721, -206.960, 297.105, 152.209, 19.857, 109.166);
+    DescPose desc_pos2(-301.575, -254.888, 284.786, 155.919, 26.946, 111.629);
+    DescPose desc_safe(-344.386, -280.830, 435.073, 173.835, 15.333, 124.931);
+    JointPos jointPos1(9.827, -99.740, 120.088, -78.900, -77.241, -17.904);
+    JointPos jointPos2(15.251, -96.456, 120.138, -84.664, -68.542, -17.843);
+    JointPos jointSafe(19.142, -98.078, 101.493, -83.078, -77.070, -17.794);
+    ExaxisPos exaxis(0.0, 0.0, 0.0, 0.0);
+    DescPose offset(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+
+    // 移动到第一个焊接点
+    int error = robot.MoveL(&desc_pos1,0, 0, 100, 100, 100, -1, 0, &exaxis, 0, 0, &offset, -1, 0);
+    std::cout << "MoveL to pos1 return: " << error << std::endl;
+
+    // 开启激光（出光）
+    rtn = robot.SetLaserWeldingStartEnd(1, 1, 10000);
+    if (rtn != 0) {
+        std::cout << "SetLaserWeldingStartEnd (start) failed, error code: " << rtn << std::endl;
+    }
+    else {
+        std::cout << "Laser started" << std::endl;
+    }
+
+    // 移动到第二个焊接点（焊接过程中）
+    rtn = robot.MoveL(&desc_pos2,0, 0, 30, 100, 100, -1, 0, &exaxis, 0, 0, &offset, -1, 0);
+    std::cout << "MoveL to pos2 return: " << rtn << std::endl;
+
+    // 关闭激光（收光）
+    rtn = robot.SetLaserWeldingStartEnd(1, 0, 10000);
+    if (rtn != 0) {
+        std::cout << "SetLaserWeldingStartEnd (stop) failed, error code: " << rtn << std::endl;
+    }
+    else {
+        std::cout << "Laser stopped" << std::endl;
+    }
+
+    robot.Sleep(500);
+
+    // 移动到安全点
+    rtn = robot.MoveL(&desc_safe, 0, 0, 100, 100, 100, -1, 0, &exaxis, 0, 0, &offset, -1, 0);
+    std::cout << "MoveL to safe_pos return: " << rtn << std::endl;
+
+    // 设置为模式1（通常为远程模式）
+    rtn = robot.Mode(1);
+    if (rtn != 0) {
+        std::cout << "Set mode 1 failed, error code: " << rtn << std::endl;
+    }
+    robot.Sleep(1000);
+
+    // 关闭连接
+    robot.CloseRPC();
+    robot.Sleep(1000);
+
+    std::cout << "Test completed" << std::endl;
+    return 0;
+}
+
+int TestUDPAxis(void)
+{
+    ROBOT_STATE_PKG pkg = {};
+    FRRobot robot;
+
+    robot.LoggerInit();
+    robot.SetLoggerLevel(1);
+    int rtn = robot.RPC("192.168.58.2");
+    if (rtn != 0)
+    {
+        return -1;
+    }
+    robot.SetReConnectParam(true, 30000, 500);
+
+    rtn = robot.ExtDevSetUDPComParam("192.168.58.88", 2021, 2, 100, 3, 200, 1, 100, 5, 1);
+    cout << "ExtDevSetUDPComParam rtn is " << rtn << endl;
+    string ip = ""; int port = 0; int period = 0; int lossPkgTime = 0; int lossPkgNum = 0; int disconnectTime = 0; int reconnectEnable = 0; int reconnectPeriod = 0; int reconnectNum = 0; int selfConnect = 0;
+    rtn = robot.ExtDevGetUDPComParam(ip, port, period, lossPkgTime, lossPkgNum, disconnectTime, reconnectEnable, reconnectPeriod, reconnectNum, selfConnect);
+    string patam = "\nip " + ip + "\nport " + to_string(port) + "\nperiod  " + to_string(period) + "\nlossPkgTime " + to_string(lossPkgTime) + "\nlossPkgNum  " + to_string(lossPkgNum) + "\ndisConntime  " +
+        to_string(disconnectTime) + "\nreconnecable  " + to_string(reconnectEnable) + "\nreconnperiod  " + to_string(reconnectPeriod) + "\nreconnnun  " + to_string(reconnectNum) + "\nselfConnect  " + to_string(selfConnect);
+    cout << "ExtDevGetUDPComParam rtn is " << rtn << patam << endl;
+
+    robot.ExtDevLoadUDPDriver();
+
+    rtn = robot.SetExAxisCmdDoneTime(5000.0);
+    cout << "SetExAxisCmdDoneTime rtn is " << rtn << endl;
+    rtn = robot.ExtAxisServoOn(1, 1);
+    cout << "ExtAxisServoOn axis id 1 rtn is " << rtn << endl;
+    rtn = robot.ExtAxisServoOn(2, 1);
+    cout << "ExtAxisServoOn axis id 2 rtn is " << rtn << endl;
+    robot.Sleep(2000);
+
+    robot.ExtAxisSetHoming(1, 0, 10, 2);
+    robot.Sleep(2000);
+    rtn = robot.ExtAxisSetHoming(2, 0, 10, 2);
+    cout << "ExtAxisSetHoming rtnn is  " << rtn << endl;
+
+    robot.Sleep(4000);
+
+    rtn = robot.SetRobotPosToAxis(1);
+    cout << "SetRobotPosToAxis rtn is " << rtn << endl;
+    rtn = robot.SetAxisDHParaConfig(10, 20, 0, 0, 0, 0, 0, 0, 0);
+    cout << "SetAxisDHParaConfig rtn is " << rtn << endl;
+
+    int axisType = -1;
+    int axisDirection = -1;
+    double axisMax = -1;
+    double axisMin = -1;
+    double axisVel = -1;
+    double axisAcc = -1;
+    double axisLead = -1;
+    int encResolution = -1;
+    double axisOffect = -1;
+    int axisCompany = -1;
+    int axisModel = -1;
+    int axisEncType = -1;
+
+    rtn = robot.ExtAxisParamConfig(1, 1, 1, 1000, -1000, 1000, 1000, 1.905, 262144, 200, 1, 0, 0);
+    cout << "ExtAxisParamConfig axis 1 rtn is " << rtn << endl;
+    rtn = robot.ExtAxisGetParamConfig(1, axisType, axisDirection, axisMax, axisMin, axisVel, axisAcc, axisLead, encResolution, axisOffect, axisCompany, axisModel, axisEncType);
+    printf("axis id 1 ExtAxisGetParamConfig : axisType %d, axisDirection %d, axisMax %lf, axisMin %lf, axisVel %lf, axisAcc %lf, axisLead%lf, encResolution %d, axisOffect %f, axisCompany %d, axisModel %d, axisEncType %d\n",
+        axisType, axisDirection, axisMax, axisMin, axisVel, axisAcc, axisLead, encResolution, axisOffect, axisCompany, axisModel, axisEncType);
+    
+    rtn = robot.ExtAxisParamConfig(2, 1, 1, 1000, -1000, 1000, 1000, 4.444, 262144, 200, 1, 0, 0);
+    cout << "ExtAxisParamConfig axis 2 rtn is " << rtn << endl;
+    rtn = robot.ExtAxisGetParamConfig(2, axisType, axisDirection, axisMax, axisMin, axisVel, axisAcc, axisLead, encResolution, axisOffect, axisCompany, axisModel, axisEncType);
+    printf("axis id 2 ExtAxisGetParamConfig : axisType %d, axisDirection %d, axisMax %lf, axisMin %lf, axisVel %lf, axisAcc %lf, axisLead%lf, encResolution %d, axisOffect %f, axisCompany %d, axisModel %d, axisEncType %d\n",
+        axisType, axisDirection, axisMax, axisMin, axisVel, axisAcc, axisLead, encResolution, axisOffect, axisCompany, axisModel, axisEncType);
+
+    robot.Sleep(1000 * 3);
+    robot.ExtAxisStartJog(1, 0, 10, 10, 30);
+    robot.Sleep(1000 * 1);
+    robot.ExtAxisStopJog(1);
+    robot.Sleep(1000 * 3);
+    robot.ExtAxisServoOn(1, 0);
+
+    robot.Sleep(1000 * 3);
+    robot.ExtAxisStartJog(2, 0, 10, 10, 30);
+    robot.Sleep(1000 * 1);
+    robot.ExtAxisStopJog(2);
+    robot.Sleep(1000 * 3);
+    robot.ExtAxisServoOn(2, 0);
+    robot.Sleep(1000 * 1);
+    robot.ExtDevUnloadUDPDriver();
+
+    robot.CloseRPC();
+    return 0;
+}
+
+
+int main() {
+    TestUDPAxis();
+    return 0;
+    ROBOT_STATE_PKG pkg = {};
+    FRRobot robot;
+    robot.LoggerInit();
+    robot.SetLoggerLevel(1);
+    robot.SetReConnectParam(true, 300000, 500);
+
+    robot.AddRobotRealtimeState(RobotState::ExaxisCoordID);
+
+    int rtn = robot.RPC("192.168.58.2");
+    if (rtn != 0)
+    {
+        return -1;
+    }
+
+    while (true)
+    {
+        robot.GetRobotRealTimeState(&pkg);
+        printf("id is %d, coord is %f %f %f %f %f %f\n", pkg.exaxisCoordID, pkg.exAxisCoord[0], pkg.exAxisCoord[1], pkg.exAxisCoord[2], pkg.exAxisCoord[3], pkg.exAxisCoord[4], pkg.exAxisCoord[5]);
+        robot.Sleep(100);
+    }
 
     robot.CloseRPC();
 

@@ -30,11 +30,14 @@
 #include "XmlRpc.h"
 #include "logger.h"
 
+#ifdef WINDOWS_OPTION
+#define FR_LIB_TCP_EXPORT __declspec(dllexport)
+#else
+#define FR_LIB_TCP_EXPORT
+#endif
 
-//将跨平台网络调用封装起来;
-//这一块可以考虑引入一个第三方库;
 
-class FRTcpClient
+class FR_LIB_TCP_EXPORT FRTcpClient
 {
 public:
     FRTcpClient(std::string IP, int port);

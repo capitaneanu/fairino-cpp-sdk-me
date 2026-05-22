@@ -46,11 +46,11 @@
     // SDK版本号
     #define SDK_VERSION_MAJOR "2"
     #define SDK_VERSION_MINOR "3"
-    #define SDK_VERSION_RELEASE "5"
+    #define SDK_VERSION_RELEASE "6"
     #define SDK_VERSION_RELEASE_NUM "0"
     #define SDK_VERSION "SDK V" SDK_VERSION_MAJOR "." SDK_VERSION_MINOR
 #endif
-#define SDK_RELEASE "SDK V2.3.5.0-robot v3.9.5"
+#define SDK_RELEASE "SDK V2.3.6.0-robot v3.9.6"
 
 #define ROBOT_CNDE_TCP_PORT 20005
 #define ROBOT_CMD_PORT 8080
@@ -161,7 +161,7 @@ void FRRobot::RobotInstCmdRecvRoutineThread()
         {
             logger_info("recv cmd is %s.", (char*)g_recvbuf);
             std::vector<std::string> allFrames = SplitFrame(std::string(g_recvbuf));
-            for (int i = 0; i < allFrames.size(); i++)
+            for (int i = 0; i < static_cast<int>(allFrames.size()); i++)
             {
                 FRAME rcvFrame = UnpacketFrame(allFrames[i]);
 
@@ -2058,7 +2058,7 @@ errno_t FRRobot::StopMotion()
     static int cnt = 0;
 
     memset(g_sendbuf, 0, BUFFER_SIZE * sizeof(char));
-    sprintf(g_sendbuf, "/f/bIII44III102III4IIISTOPIII/b/f", cnt);
+    sprintf(g_sendbuf, "/f/bIII44III102III4IIISTOPIII/b/f");
     cnt++;
     is_sendcmd = true;
 
@@ -7014,7 +7014,7 @@ errno_t FRRobot::FT_PdIdenCompute(float *weight)
         errcode = int(result[0]);
         if (errcode == 0)
         {
-            *weight = double(result[1]);
+            *weight = static_cast<float>((double(result[1])));
         }
         else{
             logger_error("execute FT_PdIdenCompute fail %d", errcode);
@@ -10551,7 +10551,7 @@ errno_t FRRobot::FileUpLoad(int fileType, std::string filePath, int reUp)
         return ERR_UPLOAD_FILE_NOT_FOUND;
     }
 
-    long file_size = GetFileSize(filePath);
+    long file_size = static_cast<long>(GetFileSize(filePath));
 
     long total_size = file_size + 16 + 32 +2;
     logger_info("file size is: %ld, total size is: %ld.", file_size, total_size);
@@ -10666,7 +10666,7 @@ errno_t FRRobot::FileUpLoad(int fileType, std::string filePath, int reUp)
     while (!fileS.eof()) 
     {
         fileS.read(sendBuf.data(), sendBuf.size());
-        size_t bytes_read = fileS.gcount();
+        size_t bytes_read = static_cast<size_t>(fileS.gcount());
         if (bytes_read > 0) 
         {
             size_t sent = 0;
@@ -10876,7 +10876,7 @@ errno_t FRRobot::FileDelete(int fileType, std::string fileName)
     {
         return g_sock_com_err;
     }
-    /* 检查文件名称，文件路径*/
+
     if (fileName.length() == 0)
     {
         logger_error("file path can not be empty.");
@@ -12622,46 +12622,64 @@ errno_t FRRobot::ExtAxisParamConfig(int axisID, int axisType, int axisDirection,
 }
 
 /**
- * @brief 获取扩展轴驱动器配置信息
- * @param [in] axisId 轴号[1-4]
- * @param [out] axisCompany 驱动器厂家 1-禾川；2-汇川；3-松下
- * @param [out] axisModel 驱动器型号 1-禾川-SV-XD3EA040L-E，2-禾川-SV-X2EA150A-A，1-汇川-SV620PT5R4I，1-松下-MADLN15SG，2-松下-MSDLN25SG，3-松下-MCDLN35SG
- * @param [out] axisEncType 编码器类型  0-增量；1-绝对值
- * @return 错误码
- */
-//errno_t FRRobot::GetExAxisDriverConfig(int axisId, int& axisCompany, int& axisModel, int& axisEncType)
-//{
-//    int errcode = 0;
-//    XmlRpcClient c(serverUrl, 20003);
-//    XmlRpcValue param, result;
-//
-//    param[0] = axisId;
-//
-//    if (c.execute("GetExAxisDriverConfig", param, result))
-//    {
-//        errcode = int(result[0]);
-//        if (0 != errcode)
-//        {
-//            logger_error("execute GetExAxisDriverConfig fail: %d.", errcode);
-//            c.close();
-//            return errcode;
-//        }
-//        else
-//        {
-//            axisCompany = (int)(result[1]);
-//            axisModel = (int)(result[2]);
-//            axisEncType = (int)(result[3]);
-//        }
-//    }
-//    else
-//    {
-//        c.close();
-//        return ERR_XMLRPC_CMD_FAILED;
-//    }
-//
-//    c.close();
-//    return errcode;
-//}
+* @brief UDP扩展轴参数获取
+* @param [in] axisID 扩展轴号[1-4]
+* @param [out] axisType 扩展轴类型 0-平移；1-旋转
+* @param [out] axisDirection 扩展轴方向 0-正向；1-方向
+* @param [out] axisMax 扩展轴最大位置 mm
+* @param [out] axisMin 扩展轴最小位置 mm
+* @param [out] axisVel 速度mm/s
+* @param [out] axisAcc 加速度mm/s2
+* @param [out] axisLead 导程mm
+* @param [out] encResolution 编码器分辨率
+* @param [out] axisOffect焊缝起始点扩展轴偏移量
+* @param [out] axisCompany 驱动器厂家 1-禾川；2-汇川；3-松下
+* @param [out] axisModel 驱动器型号 1-禾川-SV-XD3EA040L-E，2-禾川-SV-X2EA150A-A，1-汇川-SV620PT5R4I，1-松下-MADLN15SG，2-松下-MSDLN25SG，3-松下-MCDLN35SG
+* @param [out] axisEncType 编码器类型  0-增量；1-绝对值
+* @return 错误码
+*/
+errno_t FRRobot::ExtAxisGetParamConfig(int axisID, int& axisType, int& axisDirection, double& axisMax, double& axisMin, double& axisVel, double& axisAcc, double& axisLead, int& encResolution, double& axisOffect, int& axisCompany, int& axisModel, int& axisEncType)
+{
+    int errcode = 0;
+    XmlRpcClient c(serverUrl, 20003);
+    XmlRpcValue param, result;
+    
+    param[0] = axisID;
+    
+    if (c.execute("ExtAxisGetParamConfig", param, result))
+    {
+        errcode = int(result[0]);
+        if (0 != errcode)
+        {
+            logger_error("execute ExtAxisGetParamConfig fail: %d.", errcode);
+            c.close();
+            return errcode;
+        }
+        else
+        {
+            axisType = (int)(result[1]);
+            axisDirection = (int)(result[2]);
+            axisMax = (double)(result[3]);
+            axisMin = (double)(result[4]);
+            axisVel = (double)(result[5]);
+            axisAcc = (double)(result[6]);
+            axisLead = (double)(result[7]);
+            encResolution = (int)(result[8]);
+            axisOffect = (double)(result[9]);
+            axisCompany = (int)(result[10]) ;
+            axisModel = (int)(result[11]);
+            axisEncType = (int)(result[12]);
+        }
+    }
+    else
+    {
+        c.close();
+        return ERR_XMLRPC_CMD_FAILED;
+    }
+    
+    c.close();
+    return errcode;
+}
 
 /**
  * @brief 设置扩展机器人相对扩展轴位置
@@ -12836,8 +12854,8 @@ errno_t FRRobot::ExtAxisComputeECoordSys(DescPose& coord)
 
 /**
  * @brief 应用扩展轴坐标系
- * @param [in]  axisCoordNum 坐标系编号
- * @param [in]  toolNum 工具号
+ * @param [in]  axisCoordNum 扩展轴号；bit0-bit3对应扩展轴1-扩展轴4；如应用扩展轴[1，2]，axisCoordNum值为3
+ * @param [in]  toolNum 扩展轴坐标系编号
  * @param [in]  coord 坐标系值
  * @param [in]  calibFlag 标定标志 0-否，1-是
  * @return 错误码
@@ -16766,7 +16784,7 @@ errno_t FRRobot::GetCtrlOpenLUAName(std::string name[])
             string paramStr = (string)result[1];
 
             std::vector<std::string> parS = split(paramStr, ',');
-            for (int i = 0; i < parS.size(); i++)
+            for (int i = 0; i < static_cast<int>(parS.size()); i++)
             {
                 name[i] = parS[i];
             }

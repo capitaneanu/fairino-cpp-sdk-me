@@ -2763,6 +2763,25 @@ public:
 	errno_t ExtAxisParamConfig(int axisID, int axisType, int axisDirection, double axisMax, double axisMin, double axisVel, double axisAcc, double axisLead, int encResolution, double axisOffect, int axisCompany, int axisModel, int axisEncType);
 
 	/**
+	 * @brief Get UDP extended axis parameters
+	 * @param [in] axisID Extended axis number [1-4]
+	 * @param [out] axisType Extended axis type 0-Linear; 1-Rotary
+	 * @param [out] axisDirection Extended axis direction 0-Forward; 1-Reverse
+	 * @param [out] axisMax Extended axis maximum position (mm)
+	 * @param [out] axisMin Extended axis minimum position (mm)
+	 * @param [out] axisVel Speed (mm/s)
+	 * @param [out] axisAcc Acceleration (mm/s²)
+	 * @param [out] axisLead Lead screw pitch (mm)
+	 * @param [out] encResolution Encoder resolution
+	 * @param [out] axisOffect Weld start point extended axis offset
+	 * @param [out] axisCompany Drive manufacturer 1-Hekun; 2-Inovance; 3-Panasonic
+	 * @param [out] axisModel Drive model 1-Hekun-SV-XD3EA040L-E, 2-Hekun-SV-X2EA150A-A, 1-Inovance-SV620PT5R4I, 1-Panasonic-MADLN15SG, 2-Panasonic-MSDLN25SG, 3-Panasonic-MCDLN35SG
+	 * @param [out] axisEncType Encoder type 0-Incremental; 1-Absolute
+	 * @return Error code
+	 */
+	errno_t ExtAxisGetParamConfig(int axisID, int& axisType, int& axisDirection, double& axisMax, double& axisMin, double& axisVel, double& axisAcc, double& axisLead, int& encResolution, double& axisOffect, int& axisCompany, int& axisModel, int& axisEncType);
+
+	/**
 	* @brief Set the installation position of the expansion shaft
 	* @param [in] installType  0-The robot is installed on the external axis, 1-the robot is installed outside the external axis
 	* @return error code
@@ -2799,13 +2818,14 @@ public:
 	errno_t ExtAxisComputeECoordSys(DescPose& coord);
 
 	/**
-	* @brief Apply the extended axis coordinate system
-	* @param [in]  axisCoordNum coordinate system number
-	* @param [in]  toolNum tool number
-	* @param [in]  coord coordinate values
-	* @param [in]  calibFlag calibflag 0-No, 1-yes
-	* @return error code
-	*/
+	 * @brief Apply extended axis coordinate system
+	 * @param [in] axisCoordNum Extended axis number; bit0-bit3 correspond to extended axis 1-4;
+	 *            e.g., to apply extended axes [1,2], axisCoordNum value is 3
+	 * @param [in] toolNum Extended axis coordinate system number
+	 * @param [in] coord Coordinate system values
+	 * @param [in] calibFlag Calibration flag 0-No, 1-Yes
+	 * @return error code
+	 */
 	errno_t ExtAxisActiveECoordSys(int axisCoordNum, int toolNum, DescPose coord, int calibFlag);
 
 	/**
@@ -4997,6 +5017,162 @@ public:
 	 * @return Error code
 	 */
 	errno_t GetRobotRealtimeStateConfig(std::vector<RobotState>& states, int& period);
+
+	/**
+	 * @brief  Joint space velocity servo control mode motion
+	 * @param  [in] joint_pos  Target joint velocities for 6 axes, unit: deg/s
+	 * @param  [in] axisPos    Velocities for 4 external axes, unit: deg/s
+	 * @param  [in] acc        Acceleration percentage, range [0~100], not yet available, default is 0
+	 * @param  [in] vel        Velocity percentage, range [0~100], not yet available, default is 0
+	 * @param  [in] cmdT       Command sending period, unit: s, recommended range [0.001~0.0016]
+	 * @param  [in] filterT    Filter time, unit: s, not yet available, default is 0
+	 * @param  [in] gain       Proportional gain for target position, not yet available, default is 0
+	 * @param  [in] id         ServoJ command ID, default is 0
+	 * @param  [in] comType    Command sending type; 0-xmlrpc; 1-UDP (corresponding to robot port 20007)
+	 * @return   Error code
+	 */
+	errno_t ServoJV(double jointVel[6], double exisVel[4], float acc, float vel, float cmdT, float filterT, float gain, int id = 0, int comType = 0);
+
+	/**
+	 * @brief  Start joint MIT control
+	 * @param  [in] comType    Command sending type; 0-xmlrpc; 1-UDP (corresponding to robot port 20007)
+	 * @return   Error code
+	 */
+	errno_t ServoMITStart(int comType = 0);
+
+	/**
+	 * @brief  Stop joint MIT control
+	 * @param  [in] comType    Command sending type; 0-xmlrpc; 1-UDP (corresponding to robot port 20007)
+	 * @return   Error code
+	 */
+	errno_t ServoMITEnd(int comType = 0);
+
+	/**
+	 * @brief  Joint MIT control
+	 * @param  [in] posGain    Position gains for joints j1~j6
+	 * @param  [in] desPos     Desired positions for joints j1~j6, unit: deg
+	 * @param  [in] velGain    Velocity gains for joints j1~j6
+	 * @param  [in] desVel     Desired velocities for joints j1~j6, unit: deg/s
+	 * @param  [in] torque_ff  Feedforward torques for joints j1~j6, unit: Nm
+	 * @param  [in] interval   Command period, unit: s, range [0.001~0.008]
+	 * @param  [in] comType    Command sending type; 0-xmlrpc; 1-UDP (corresponding to robot port 20007)
+	 * @return   Error code
+	 */
+	errno_t ServoMIT(double posGain[6], double desPos[6], double velGain[6], double desVel[6], double torque_ff[6], double interval, int comType = 0);
+
+	/**
+	 * @brief Write configuration parameters to one of the 10 process groups of the laser welding machine and configure them to the welder
+	 * @param[in] io_type Communication type 0-IO 1-UDP
+	 * @param[in] num Process group number to set (1~10)
+	 * @param[in] scanSpeed Scanning speed
+	 * @param[in] scanWidth Scanning width
+	 * @param[in] peakPower Peak power
+	 * @param[in] dutyCycle Duty cycle
+	 * @param[in] freq Frequency
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t SetLaserWeldingParam(int io_type, int num, int scanSpeed, int scanWidth,
+		int peakPower, int dutyCycle, int freq);
+
+	/**
+	 * @brief Start/stop the laser welding machine
+	 * @param[in] io_type Communication type 0-IO 1-UDP
+	 * @param[in] status Control word 0-Laser off 1-Laser on
+	 * @param[in] max_waittime Maximum waiting time in milliseconds, default 10000
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t SetLaserWeldingStartEnd(int io_type, int status, int max_waittime = 10000);
+
+	/**
+	 * @brief Enable/disable the laser welding machine
+	 * @param[in] io_type Communication type 0-IO 1-UDP
+	 * @param[in] status 0-Disable 1-Enable
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t SetLaserWeldingEnable(int io_type, int status);
+
+	/**
+	 * @brief Reset laser welding machine fault
+	 * @param[in] io_type Communication type 0-IO 1-UDP
+	 * @param[in] status Control word 0-Invalid 1-Fault reset
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t ResetLaserWeldingErr(int io_type, int status);
+
+	/**
+	 * @brief Get laser welding machine running status
+	 * @param[in] io_type Communication type 0-IO 1-UDP
+	 * @param[out] status Control word 0-Stopped 1-Running
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t GetLaserWeldingRunningState(int io_type, int& status);
+
+	/**
+	 * @brief Get laser welding machine fault status
+	 * @param[in] io_type Communication type 0-IO 1-UDP
+	 * @param[out] status 0-No fault 1-Fault present
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t GetLaserWeldingErrState(int io_type, int& status);
+
+	/**
+	 * @brief Get configuration parameters of one of the 10 process groups from the laser welding machine
+	 * @param[in] num Process group number to get (1~10)
+	 * @param[out] scanSpeed Scanning speed
+	 * @param[out] scanWidth Scanning width
+	 * @param[out] peakPower Peak power
+	 * @param[out] dutyCycle Duty cycle
+	 * @param[out] freq Frequency
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t GetLaserWeldingParamTarget(int num, int& scanSpeed, int& scanWidth, int& peakPower, int& dutyCycle, int& freq);
+
+	/**
+	 * @brief Get currently active configuration parameters of the laser welding machine
+	 * @param[in] io_type Communication type 0-IO 1-UDP
+	 * @param[out] scanSpeed Scanning speed
+	 * @param[out] scanWidth Scanning width
+	 * @param[out] peakPower Peak power
+	 * @param[out] dutyCycle Duty cycle
+	 * @param[out] freq Frequency
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t GetLaserWeldingParamActual(int io_type, int& scanSpeed, int& scanWidth, int& peakPower, int& dutyCycle, int& freq);
+
+	/**
+	 * @brief Set extended IO for laser welding machine - Enable DO port
+	 * @param[in] ctrlModeDONum Extended DO port number for laser welding machine enable
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t SetLaserWeldingEnableExtDoNum(int ctrlModeDONum);
+
+	/**
+	 * @brief Set extended IO for laser welding machine - Start DO port
+	 * @param[in] ctrlModeDONum Extended DO port number for laser welding machine start (laser on/off)
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t SetLaserWeldingStartExtDoNum(int ctrlModeDONum);
+
+	/**
+	 * @brief Set extended IO for laser welding machine - Fault reset DO port
+	 * @param[in] ctrlModeDONum Extended DO port number for laser welding machine fault reset
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t SetLaserWeldingErrResetExtDoNum(int ctrlModeDONum);
+
+	/**
+	 * @brief Configure extended DI for laser welding machine running status (laser on status)
+	 * @param[in] diNum Extended DI port number for laser welding machine running status (laser on status)
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t SetLaserWeldingRunningStateExtDiNum(int diNum);
+
+	/**
+	 * @brief Configure extended DI for laser welding machine fault status
+	 * @param[in] diNum Extended DI port number for laser welding machine fault status
+	 * @return Error code, 0 indicates success, non-zero indicates failure
+	 */
+	errno_t SetLaserWeldingErrStateExtDiNum(int diNum);
 
 	/**
 	 *@brief  Robot interface class destructor

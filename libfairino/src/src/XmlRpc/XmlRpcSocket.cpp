@@ -5,26 +5,28 @@
 #ifndef MAKEDEPEND
 
 #if defined(_WINDOWS)
-#include <stdio.h>
-#include <WS2tcpip.h>
-#include <winsock2.h>
-//# pragma lib(WS2_32.lib)
-#pragma comment(lib, "WS2_32.lib")   //vincent 2023.03.22
+    #include <stdio.h>
+    #include <WS2tcpip.h>
+    #include <winsock2.h>
+    //# pragma lib(WS2_32.lib)
+    #pragma comment(lib, "WS2_32.lib")   //vincent 2023.03.22
 
 # define EINPROGRESS	WSAEINPROGRESS
+
 # define EWOULDBLOCK	WSAEWOULDBLOCK
+
 # define ETIMEDOUT	    WSAETIMEDOUT
 #else
-extern "C" {
-# include <unistd.h>
-# include <stdio.h>
-# include <sys/types.h>
-# include <sys/socket.h>
-# include <netinet/in.h>
-# include <netdb.h>
-# include <errno.h>
-# include <fcntl.h>
-}
+    extern "C" {
+    # include <unistd.h>
+    # include <stdio.h>
+    # include <sys/types.h>
+    # include <sys/socket.h>
+    # include <netinet/in.h>
+    # include <netdb.h>
+    # include <errno.h>
+    # include <fcntl.h>
+    }
 #endif  // _WINDOWS
 
 
@@ -165,9 +167,9 @@ XmlRpcSocket::connect(int fd, std::string& host, int port)
 
   /*struct hostent *hp = gethostbyname(host.c_str());
   if (hp == 0) return false;*/
-  struct addrinfo hints, * res, * p;
+  struct addrinfo hints, * res;// *p;
   int status;
-  char ipstr[INET6_ADDRSTRLEN];
+  //char ipstr[INET6_ADDRSTRLEN];
 
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_UNSPEC;
@@ -175,7 +177,7 @@ XmlRpcSocket::connect(int fd, std::string& host, int port)
   status = getaddrinfo(host.c_str(), NULL, &hints, &res);
   if (status != 0) {
       logger_info("getaddrinfo failed %s.", host);
-      return -1;
+      return false;
   }
 
   struct sockaddr_in* ipv4 = (struct sockaddr_in*)res->ai_addr;

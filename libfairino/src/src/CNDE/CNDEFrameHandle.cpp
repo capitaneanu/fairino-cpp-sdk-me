@@ -7,8 +7,8 @@ std::vector<char> CNDEPkgToFrame(CNDE_PKG& pkg)
 {
 	vector<char> frame;
     frame.clear();
-    frame.push_back(0x5A);
-    frame.push_back(0x5A);
+    frame.push_back(static_cast<char>(0x5A));
+    frame.push_back(static_cast<char>(0x5A));
     frame.push_back(pkg.count);
     frame.push_back(pkg.type);
 
@@ -17,8 +17,8 @@ std::vector<char> CNDEPkgToFrame(CNDE_PKG& pkg)
 
     frame.insert(frame.end(), lenByte, lenByte + 2);
     frame.insert(frame.end(), pkg.data.begin(), pkg.data.end());
-    frame.push_back(0xA5);
-    frame.push_back(0xA5);
+    frame.push_back(static_cast<char>(0xA5));
+    frame.push_back(static_cast<char>(0xA5));
 
     //for (int i = 0; i < frame.size(); i++)
     //{
@@ -65,7 +65,7 @@ int FrameToCNDEPkg(std::vector<char> frame, CNDE_PKG& pkg)
     pkg.data.clear();
 
     // 从索引6开始，取pkg.len个元素
-    if (frame.size() >= 6 + pkg.len) 
+    if (frame.size() >= static_cast<size_t>(6 + pkg.len))
     {
         pkg.data.insert(pkg.data.end(), frame.begin() + 6, frame.begin() + 6 + pkg.len);
     }

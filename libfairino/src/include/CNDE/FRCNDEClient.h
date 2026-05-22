@@ -5,7 +5,13 @@
 #include <mutex>
 #include <memory>
 
-class FRCNDEClient
+#ifdef WINDOWS_OPTION
+#define FR_LIB_CNDE_EXPORT __declspec(dllexport)
+#else
+#define FR_LIB_CNDE_EXPORT
+#endif
+
+class FR_LIB_CNDE_EXPORT FRCNDEClient
 {
 public:
 	FRCNDEClient(std::shared_ptr<ROBOT_STATE_PKG> pkg, int* comErr);

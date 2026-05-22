@@ -3,6 +3,7 @@
 #ifdef WIN32
 #include <winsock2.h>
 #include <windows.h>
+#include <WS2tcpip.h>
 #elif __MINGW32__
 #include <winsock2.h>
 #include <windows.h>
@@ -29,7 +30,13 @@
 #include "XmlRpc.h"
 #include "logger.h"
 
-class FRUdpClient
+#ifdef WINDOWS_OPTION
+#define FR_LIB_UDP_EXPORT __declspec(dllexport)
+#else
+#define FR_LIB_UDP_EXPORT
+#endif
+
+class FR_LIB_UDP_EXPORT FRUdpClient
 {
 public:
     FRUdpClient();

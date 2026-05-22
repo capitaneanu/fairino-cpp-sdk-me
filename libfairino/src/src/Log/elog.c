@@ -955,25 +955,25 @@ void elog_hexdump(const char *name, uint8_t width, const void *buf, uint16_t siz
             } else {
                 strncpy(dump_string, "   ", sizeof(dump_string));
             }
-            log_len += elog_strcpy(log_len, log_buf + log_len, dump_string);
+            log_len += (uint16_t)elog_strcpy(log_len, log_buf + log_len, dump_string);
             if ((j + 1) % 8 == 0) {
-                log_len += elog_strcpy(log_len, log_buf + log_len, " ");
+                log_len += (uint16_t)elog_strcpy(log_len, log_buf + log_len, " ");
             }
         }
-        log_len += elog_strcpy(log_len, log_buf + log_len, "  ");
+        log_len += (uint16_t)elog_strcpy(log_len, log_buf + log_len, "  ");
         /* dump char for hex */
         for (j = 0; j < width; j++) {
             if (i + j < size) {
                 snprintf(dump_string, sizeof(dump_string), "%c", __is_print(buf_p[i + j]) ? buf_p[i + j] : '.');
-                log_len += elog_strcpy(log_len, log_buf + log_len, dump_string);
+                log_len += (uint16_t)elog_strcpy(log_len, log_buf + log_len, dump_string);
             }
         }
         /* overflow check and reserve some space for newline sign */
         if (log_len + strlen(ELOG_NEWLINE_SIGN) > ELOG_LINE_BUF_SIZE) {
-            log_len = ELOG_LINE_BUF_SIZE - strlen(ELOG_NEWLINE_SIGN);
+            log_len = (uint16_t)(ELOG_LINE_BUF_SIZE - strlen(ELOG_NEWLINE_SIGN));
         }
         /* package newline sign */
-        log_len += elog_strcpy(log_len, log_buf + log_len, ELOG_NEWLINE_SIGN);
+        log_len += (uint16_t)elog_strcpy(log_len, log_buf + log_len, ELOG_NEWLINE_SIGN);
         /* do log output */
 // #if defined(ELOG_ASYNC_OUTPUT_ENABLE)
         // extern void elog_async_output(uint8_t level, const char *log, size_t size);

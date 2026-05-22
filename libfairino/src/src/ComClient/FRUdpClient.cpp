@@ -1,6 +1,6 @@
 #include "FRUdpClient.h"
 #include "FrameHandle.h"
-
+#include <cstring>
 using namespace std;
 
 FRUdpClient::FRUdpClient()
@@ -40,7 +40,7 @@ int FRUdpClient::Connect(std::string IP, int port)
     WSAStartup(MAKEWORD(2, 2), &wsaData);
     memset(&addrUDPServer, 0, sizeof(addrUDPServer));
     addrUDPServer.sin_family = AF_INET;
-    addrUDPServer.sin_addr.S_un.S_addr = inet_addr(robotIP.c_str()); /// ������ip;
+	inet_pton(AF_INET, robotIP.c_str(), &addrUDPServer.sin_addr);
     addrUDPServer.sin_port = htons(robotPort);                      /// �������˿�;
 #else
 
@@ -99,7 +99,7 @@ void FRUdpClient::RobotUDPCmdRecvThread()
 		}
 
 		std::vector<std::string> allFrames = SplitFrame(std::string(recvBuf));
-		for (int i = 0; i < allFrames.size(); i++)
+		for (int i = 0; i < static_cast<int>(allFrames.size()); i++)
 		{
 			FRAME recvFrame = UnpacketFrame(allFrames[i]);
 

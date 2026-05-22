@@ -70,11 +70,14 @@ namespace fr_network
         }
         
 #ifdef WIN32
-        //logger_info("fd is: %u, robot ip is: %s, port is: %d.", fd, _robot_ip, port);
         sockaddr_in _servaddr;
         memset(&_servaddr, 0, sizeof(_servaddr));
         _servaddr.sin_family = AF_INET;
-        _servaddr.sin_addr.S_un.S_addr = inet_addr(_robot_ip); /// 服务器ip;
+
+        if (inet_pton(AF_INET, _robot_ip, &_servaddr.sin_addr) != 1) {
+            _servaddr.sin_addr.s_addr = INADDR_ANY;
+        }
+
         _servaddr.sin_port = htons(port);                      /// 服务器端口;
 #else
         //logger_info("fd is: %d, robot ip is: %s, port is: %d.", fd, _robot_ip, port);

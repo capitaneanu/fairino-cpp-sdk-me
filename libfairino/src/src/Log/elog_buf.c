@@ -61,7 +61,6 @@ void elog_buf_output(const char *log, size_t size) {
 
     while (true) {
         if (buf_write_size + size > ELOG_BUF_OUTPUT_BUF_SIZE) {
-            printf("------------buf ouput--------------.\n");
             write_size = ELOG_BUF_OUTPUT_BUF_SIZE - buf_write_size;
             memcpy(log_buf + buf_write_size, log + write_index, write_size);
             write_index += write_size;

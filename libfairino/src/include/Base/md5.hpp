@@ -414,7 +414,7 @@ inline std::string md5_hash_hex_from_file(std::string const &input_path)
         std::streamsize bytesRead = file.gcount();
         if (bytesRead > 0)
         {
-            md5_append(&state, reinterpret_cast<md5_byte_t const *>(buffer), bytesRead);
+            md5_append(&state, reinterpret_cast<md5_byte_t const *>(buffer), static_cast<size_t>(bytesRead));
         }
     }
 

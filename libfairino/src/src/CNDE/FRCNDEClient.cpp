@@ -205,7 +205,7 @@ void FRCNDEClient::RecvRobotStateThread()
                                 double cndeValue = 0;
                                 memcpy(&cndeValue, pkg.data.data() + statePtrIndex, GetConfigTypeSize(get<3>(allStates[type])));
 
-                                float tmpValue = cndeValue;
+                                float tmpValue = static_cast<float>(cndeValue);
                                 memcpy(reinterpret_cast<char*>(robotStatePkg.get()) + get<1>(allStates[type]), &tmpValue, sizeof(float));
                             }
                             else if (get<2>(allStates[type]) == "UINT16") //AI¡¢AO¡£0-100.0   0-4095
@@ -213,7 +213,7 @@ void FRCNDEClient::RecvRobotStateThread()
                                 double cndeValue = 0;
                                 memcpy(&cndeValue, pkg.data.data() + statePtrIndex, GetConfigTypeSize(get<3>(allStates[type])));
 
-                                uint16_t tmpValue = cndeValue;
+                                uint16_t tmpValue = static_cast<uint16_t>(cndeValue);
                                 memcpy(reinterpret_cast<char*>(robotStatePkg.get()) + get<1>(allStates[type]), &tmpValue, sizeof(uint16_t));  
                             }
                             statePtrIndex += GetConfigTypeSize(get<3>(allStates[type]));
@@ -270,8 +270,8 @@ void FRCNDEClient::RecvRobotStateThread()
                                 memcpy(cndeValue, pkg.data.data() + statePtrIndex, GetConfigTypeSize(get<3>(allStates[type])));
 
                                 uint16_t tmpValue[2] = { 0 };
-                                tmpValue[0] = cndeValue[0];
-                                tmpValue[1] = cndeValue[1];
+                                tmpValue[0] = static_cast<uint16_t>(cndeValue[0]);
+                                tmpValue[1] = static_cast<uint16_t>(cndeValue[1]);
                                 memcpy(reinterpret_cast<char*>(robotStatePkg.get()) + get<1>(allStates[type]), &tmpValue, GetConfigTypeSize(get<2>(allStates[type])));
                             }
                             statePtrIndex += GetConfigTypeSize(get<3>(allStates[type]));
@@ -306,7 +306,7 @@ int FRCNDEClient::SendCNDEOutputConfig()
 
     std::string configNameListStr;
 
-    for (int i = 0; i < configStates.size(); i++) 
+    for (int i = 0; i < static_cast<int>(configStates.size()); i++)
     {
         auto it = allStates.find(configStates[i]);
         if (it != allStates.end()) 
@@ -323,7 +323,7 @@ int FRCNDEClient::SendCNDEOutputConfig()
     //cout << "config list is " << configNameListStr << endl;
 
     startPkg.data.insert(startPkg.data.end(), configNameListStr.begin(), configNameListStr.end());
-    startPkg.len = configNameListStr.length() + 2;
+    startPkg.len = static_cast<uint16_t>(configNameListStr.length() + 2);
     std::vector<char> startFrame = CNDEPkgToFrame(startPkg);
 
     int rtn = rtClient->Send(startFrame.data(), startFrame.size());
@@ -737,7 +737,8 @@ void FRCNDEClient::InitAllStates()
     allStates.insert({ RobotState::SocketConnTimeout,  std::make_tuple("socket_conn_timeout", offsetof(ROBOT_STATE_PKG, socketConnTimeout), "UINT8", "UINT8") });
     allStates.insert({ RobotState::SocketReadTimeout,  std::make_tuple("socket_read_timeout", offsetof(ROBOT_STATE_PKG, socketReadTimeout), "UINT8", "UINT8") });
     allStates.insert({ RobotState::TsWebStateComErr,  std::make_tuple("ts_web_state_com_err", offsetof(ROBOT_STATE_PKG, tsWebStateComErr), "UINT8", "UINT8") });
-    
+    allStates.insert({ RobotState::ExaxisCoordID,  std::make_tuple("exaxis_coord_id", offsetof(ROBOT_STATE_PKG, exaxisCoordID), "UINT8", "UINT8") });
+
     configStates = {
     RobotState::ProgramState,
     RobotState::RobotState,

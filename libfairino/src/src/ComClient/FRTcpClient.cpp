@@ -22,6 +22,7 @@
 #include "XmlRpc.h"
 #include "logger.h"
 #include "Utility.h"
+#include <cstring>
 
 using namespace std;
 
@@ -35,7 +36,9 @@ FRTcpClient::FRTcpClient(string IP, int port)
     WSAStartup(MAKEWORD(2, 2), &wsaData);
     memset(&servAddr, 0, sizeof(servAddr));
     servAddr.sin_family = AF_INET;
-    servAddr.sin_addr.S_un.S_addr = inet_addr(robotIP.c_str()); /// 服务器ip;
+
+    inet_pton(AF_INET, robotIP.c_str(), &servAddr.sin_addr);
+
     servAddr.sin_port = htons(robotPort);                      /// 服务器端口;
 #else
 
@@ -418,7 +421,7 @@ int FRTcpClient::RecvCNDEPkg(char* recvBuf)
             if (reconnectSuccess)
             {
                 logger_error("port 20005 reconnect success");
-                findHeadFlag == false;
+                findHeadFlag = false;
                 curRecvTotalSize = 0;
                 return 0;  //重连成功，需要重新发送启动指令
             }
@@ -462,6 +465,7 @@ int FRTcpClient::RecvCNDEPkg(char* recvBuf)
             }
         }
     }
+    return 0;
 }
 
 int FRTcpClient::Close() 
@@ -506,7 +510,7 @@ int FRTcpClient::SetIpConfig(std::string IP)
     WSAStartup(MAKEWORD(2, 2), &wsaData);
     memset(&servAddr, 0, sizeof(servAddr));
     servAddr.sin_family = AF_INET;
-    servAddr.sin_addr.S_un.S_addr = inet_addr(robotIP.c_str()); /// ������ip;
+    inet_pton(AF_INET, robotIP.c_str(), &servAddr.sin_addr);
     servAddr.sin_port = htons(robotPort);                      /// �������˿�;
 #else
 

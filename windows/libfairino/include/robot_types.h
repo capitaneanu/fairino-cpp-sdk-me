@@ -445,6 +445,7 @@ typedef struct _ROBOT_STATE_PKG
 	uint8_t socketConnTimeout;    // Socket connection timeout, bits 0-4: socket ID 1-4
 	uint8_t socketReadTimeout;    // Socket read timeout, bits 0-4: socket ID 1-4
 	uint8_t tsWebStateComErr;     // Web-torque communication failure: 0-Normal; 1-Failure
+	uint8_t exaxisCoordID;         //Extended axis coordinate system ID
 	uint16_t check_sum;			// Check sum
 }ROBOT_STATE_PKG;
 
@@ -580,7 +581,8 @@ enum class RobotState
 	AxleGenComData = 128,       // Robot end transparent transmission feedback data
 	SocketConnTimeout = 129,    // Socket connection timeout, bits 0-4: socket ID 1-4
 	SocketReadTimeout = 130,    // Socket read timeout, bits 0-4: socket ID 1-4
-	TsWebStateComErr = 131      // Web-torque communication failure: 0-Normal; 1-Failure
+	TsWebStateComErr = 131,      // Web-torque communication failure: 0-Normal; 1-Failure
+	ExaxisCoordID = 132          //Extended axis coordinate system ID
 };
 
 #endif
